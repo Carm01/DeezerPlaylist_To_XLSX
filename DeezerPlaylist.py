@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
+from datetime import datetime  # Import for timestamp conversion
 import threading
 
 # Deezer API URL for fetching playlist tracks
@@ -51,21 +52,25 @@ def get_playlist_data(arl_token, playlist_id, callback):
 
 # Convert playlist data to a pandas DataFrame
 def create_dataframe_from_playlist(playlist_data):
-    tracks = []
-    
-    for idx, track in enumerate(playlist_data, start=1):
-        track_info = {
-            "Track Number": idx,  # Add track number based on position in playlist
-            "Track Name": track["title"],
-            "Artist": track["artist"]["name"],
-            "Album": track["album"]["title"],
-            "Duration": track["duration"],
-            "Link": track["link"]
-        }
-        tracks.append(track_info)
-    
-    df = pd.DataFrame(tracks)
-    return df
+    tracks = []
+    
+    for idx, track in enumerate(playlist_data, start=1):
+        # Convert Unix timestamp to readable date format, if available
+        date_added = datetime.fromtimestamp(track["time_add"]).strftime('%Y-%m-%d %H:%M:%S') if "time_add" in track else "Unknown"
+        
+        track_info = {
+            "Track Number": idx,  # Add track number based on position in playlist
+            "Track Name": track["title"],
+            "Artist": track["artist"]["name"],
+            "Album": track["album"]["title"],
+            "Duration": track["duration"],
+            "Link": track["link"],
+            "Date Added": date_added  # New Date Added column
+        }
+        tracks.append(track_info)
+    
+    df = pd.DataFrame(tracks)
+    return df
 
 # Save DataFrame to Excel and apply formatting
 def save_to_excel(df, file_path):
